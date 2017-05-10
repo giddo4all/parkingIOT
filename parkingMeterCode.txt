@@ -1,0 +1,91 @@
+
+#define LEDPIN_R 0
+#define LEDPIN_G 1
+
+
+#define SENSORPIN_A 4
+#define SENSORPIN_B 5
+
+// variables will change:
+int sensorState_A = 0, lastState_A = 0;
+int sensorState_B = 0, lastState_B = 0;
+int parkingSpace = 75;
+
+void setup()
+{
+  // initialize the LED pin as an output:
+  pinMode(LEDPIN_R, OUTPUT);
+  pinMode(LEDPIN_G, OUTPUT);
+  
+  // initialize the sensor pins as an input and enable internal pullup:
+  pinMode(SENSORPIN_A, INPUT_PULLUP);
+  pinMode(SENSORPIN_B, INPUT_PULLUP);
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  // read the state of the sensor:
+  sensorState_A = digitalRead(SENSORPIN_A);
+  sensorState_B = digitalRead(SENSORPIN_B);
+
+  // check if the sensor beam is broken
+  // if it is, the sensorState is LOW:
+  if (sensorState_A == LOW)
+  {
+    // turn LED on:
+    digitalWrite(LEDPIN_R, HIGH);
+  }
+  else
+  {
+    // turn LED off:
+    digitalWrite(LEDPIN_R, LOW);
+  }
+  
+  
+  //ENTRY Sensor
+  if (sensorState_A && !lastState_A)
+  {
+    Serial.println("A Unbroken");
+    Particle.publish("parkingWrite", "{ \"1\": \"" + String(parkingSpace) + "\", \"k\": \"UY9QGFUUDKOTQSV0\" }", PRIVATE);
+  }
+  if (!sensorState_A && lastState_A)
+  {
+    Serial.println("A Broken");
+    
+    parkingSpace = parkingSpace  - 1;
+    Particle.publish("parkingWrite", "{ \"1\": \"" + String(parkingSpace) + "\", \"k\": \"UY9QGFUUDKOTQSV0\" }", PRIVATE);
+  }
+  lastState_A = sensorState_A;
+
+  
+  
+  
+  
+  //EXIT Sensor
+  if (sensorState_B == LOW)
+  {
+    // turn LED on:
+    digitalWrite(LEDPIN_G, HIGH);
+  }
+  else
+  {
+    // turn LED off:
+    digitalWrite(LEDPIN_G, LOW);
+  }
+
+  if (sensorState_B && !lastState_B)
+  {
+    Serial.println("B Unbroken");
+    Particle.publish("parkingWrite", "{ \"1\": \"" + String(parkingSpace) + "\", \"k\": \"UY9QGFUUDKOTQSV0\" }", PRIVATE);
+  }
+  if (!sensorState_B && lastState_B)
+  {
+    parkingSpace = parkingSpace  + 1;
+    Particle.publish("parkingWrite", "{ \"1\": \"" + String(parkingSpace) + "\", \"k\": \"UY9QGFUUDKOTQSV0\" }", PRIVATE);
+  }
+  lastState_B = sensorState_B;
+  delay(1000);
+}
+
+
